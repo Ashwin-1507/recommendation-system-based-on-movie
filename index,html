@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MovieMagic AI - Personalized Movie Recommendations</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --dark-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        --text-dark: #1f2937;
+        --text-light: #6b7280;
+        --white: #ffffff;
+        --bg-light: #f9fafb;
+        --border-color: #e5e7eb;
+        --success: #10b981;
+        --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: var(--dark-gradient);
+        min-height: 100vh;
+        color: var(--text-dark);
+        overflow-x: hidden;
+      }
+
+      /* View Management */
+      .view {
+        display: none;
+        min-height: 100vh;
+      }
+
+      .view.active {
+        display: block;
+      }
+
+      /* Login View */
+      .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+        position: relative;
+      }
+
+      .login-box {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 24px;
+        box-shadow: var(--shadow-lg);
+        padding: 48px 40px;
+        width: 100%;
+        max-width: 450px;
+        animation: slideUp 0.6s ease;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .logo-section {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      .logo {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+      }
+
+      .tagline {
+        color: var(--text-light);
+        font-size: 0.95rem;
+        font-weight: 500;
+      }
+
+      .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .form-group label {
+        font-weight: 600;
+        color: var(--text-dark);
+        font-size: 0.9rem;
+      }
+
+      .form-group input {
+        padding: 14px 16px;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        outline: none;
+        background: var(--bg-light);
+      }
+
+      .form-group input:focus {
+        border-color: #667eea;
+        background: var(--white);
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+      }
+
+      .btn-primary {
+        padding: 14px 24px;
+        background: var(--primary-gradient);
+        color: var(--white);
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 8px;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+      }
+
+      .error-message {
+        color: #ef4444;
+        font-size: 0.875rem;
+        text-align: center;
+        min-height: 20px;
+      }
+
+      /* Dashboard View */
+      .main-header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        padding: 20px 40px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .header-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .main-header h1 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .user-email {
+        color: var(--text-light);
+        font-size: 0.9rem;
+      }
+
+      .btn-secondary {
+        padding: 10px 20px;
+        background: var(--white);
+        color: #ef4444;
+        border: 2px solid #ef4444;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-secondary:hover {
+        background: #ef4444;
+        color: var(--white);
+      }
+
+      .dashboard-main {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 40px;
+      }
+
+      .search-section {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 32px;
+        margin-bottom: 32px;
+        box-shadow: var(--shadow);
+      }
+
+      .search-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 16px;
+      }
+
+      .search-bar {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .search-input {
+        flex: 1;
+        padding: 14px 20px;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        font-size: 1rem;
+        outline: none;
+        transition: all 0.3s ease;
+      }
+
+      .search-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+      }
+
+      .btn-search {
+        padding: 14px 32px;
+        background: var(--primary-gradient);
+        color: var(--white);
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-search:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+      }
+
+      .favorite-movies {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .favorite-tag {
+        background: var(--primary-gradient);
+        color: var(--white);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .favorite-tag .close {
+        cursor: pointer;
+        font-size: 1.2rem;
+        opacity: 0.8;
+      }
+
+      .favorite-tag .close:hover {
+        opacity: 1;
+      }
+
+      .section-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--white);
+        margin-bottom: 24px;
+      }
+
+      .movies-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 24px;
+        margin-bottom: 48px;
+      }
+
+      .movie-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: 2px solid transparent;
+      }
+
+      .movie-card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-lg);
+        border-color: #667eea;
+      }
+
+      .movie-poster {
+        width: 100%;
+        height: 400px;
+        background: var(--primary-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: var(--white);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .movie-poster::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
+      }
+
+      .movie-info {
+        padding: 20px;
+      }
+
+      .movie-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+      }
+
+      .movie-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .movie-year {
+        color: var(--text-light);
+        font-size: 0.9rem;
+      }
+
+      .movie-rating {
+        background: #fbbf24;
+        color: var(--white);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+
+      .movie-genres {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 12px;
+      }
+
+      .genre-tag {
+        background: var(--bg-light);
+        color: var(--text-dark);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+
+      .recommendations-section {
+        margin-top: 48px;
+      }
+
+      .recommendations-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+
+      .recommendations-count {
+        color: var(--white);
+        font-size: 1rem;
+        opacity: 0.8;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--white);
+        opacity: 0.7;
+      }
+
+      .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 16px;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .main-header {
+          padding: 16px 20px;
+        }
+
+        .header-content {
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .dashboard-main {
+          padding: 20px;
+        }
+
+        .movies-grid {
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 16px;
+        }
+
+        .search-bar {
+          flex-direction: column;
+        }
+
+        .btn-search {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Login View -->
+    <div id="login-view" class="view active">
+      <div class="login-container">
+        <div class="login-box">
+          <div class="logo-section">
+            <h1 class="logo">MovieMagic AI</h1>
+            <p class="tagline">AI-Powered Movie Recommendations</p>
+          </div>
+          <form id="login-form" class="auth-form">
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input
+                type="email"
+                id="email"
+                placeholder="Enter your email"
+                required
+                autocomplete="email"
+              />
+            </div>
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input
+                type="password"
+                id="password"
+                placeholder="Enter your password"
+                required
+                autocomplete="current-password"
+              />
+            </div>
+            <button type="submit" class="btn-primary">Login</button>
+            <p class="error-message" id="login-error"></p>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard View -->
+    <div id="dashboard-view" class="view">
+      <header class="main-header">
+        <div class="header-content">
+          <h1>MovieMagic AI</h1>
+          <div class="header-actions">
+            <span class="user-email" id="user-email-display"></span>
+            <button id="logout-btn" class="btn-secondary">Logout</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="dashboard-main">
+        <div class="search-section">
+          <h2 class="search-title">Tell us your favorite movies</h2>
+          <div class="search-bar">
+            <input
+              type="text"
+              id="movie-search"
+              class="search-input"
+              placeholder="Search and add your favorite movies..."
+              autocomplete="off"
+            />
+            <button id="search-btn" class="btn-search">Search</button>
+          </div>
+          <div id="favorite-movies" class="favorite-movies"></div>
+        </div>
+
+        <div id="recommendations-section" class="recommendations-section" style="display: none;">
+          <div class="recommendations-header">
+            <h2 class="section-title">Recommended For You</h2>
+            <span id="recommendations-count" class="recommendations-count"></span>
+          </div>
+          <div id="recommendations-grid" class="movies-grid"></div>
+        </div>
+
+        <div>
+          <h2 class="section-title">Tamil Movies</h2>
+          <div id="tamil-movies" class="movies-grid"></div>
+        </div>
+
+        <div>
+          <h2 class="section-title">Hollywood Movies</h2>
+          <div id="hollywood-movies" class="movies-grid"></div>
+        </div>
+
+        <div>
+          <h2 class="section-title">Bollywood Movies</h2>
+          <div id="bollywood-movies" class="movies-grid"></div>
+        </div>
+
+        <div>
+          <h2 class="section-title">Korean Movies</h2>
+          <div id="korean-movies" class="movies-grid"></div>
+        </div>
+
+        <div>
+          <h2 class="section-title">Japanese Movies</h2>
+          <div id="japanese-movies" class="movies-grid"></div>
+        </div>
+
+        <div>
+          <h2 class="section-title">French Movies</h2>
+          <div id="french-movies" class="movies-grid"></div>
+        </div>
+
+        <div>
+          <h2 class="section-title">Spanish Movies</h2>
+          <div id="spanish-movies" class="movies-grid"></div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // Application State
+      const AppState = {
+        currentView: 'login',
+        currentUser: null,
+        favoriteMovies: [],
+        allMovies: [],
+        recommendations: [],
+      };
+
+      // Movie Database
+      const TAMIL_MOVIES = [
+        {
+          id: 't1',
+          title: 'Baahubali 2: The Conclusion',
+          year: 2017,
+          rating: 8.8,
+          genres: ['Action', 'Drama', 'Epic'],
+          language: 'Tamil',
+          poster: '🎬',
+        },
+        {
+          id: 't2',
+          title: 'Vikram',
+          year: 2022,
+          rating: 8.9,
+          genres: ['Action', 'Thriller', 'Crime'],
+          language: 'Tamil',
+          poster: '🎯',
+        },
+        {
+          id: 't3',
+          title: 'Ponniyin Selvan: Part 1',
+          year: 2022,
+          rating: 8.5,
+          genres: ['Historical', 'Drama', 'Action'],
+          language: 'Tamil',
+          poster: '👑',
+        },
+        {
+          id: 't4',
+          title: 'Master',
+          year: 2021,
+          rating: 8.2,
+          genres: ['Action', 'Thriller'],
+          language: 'Tamil',
+          poster: '🎭',
+        },
+        {
+          id: 't5',
+          title: 'Kaithi',
+          year: 2019,
+          rating: 8.7,
+          genres: ['Action', 'Thriller', 'Crime'],
+          language: 'Tamil',
+          poster: '🚗',
+        },
+        {
+          id: 't6',
+          title: '96',
+          year: 2018,
+          rating: 9.0,
+          genres: ['Romance', 'Drama'],
+          language: 'Tamil',
+          poster: '💕',
+        },
+        {
+          id: 't7',
+          title: 'Super Deluxe',
+          year: 2019,
+          rating: 8.8,
+          genres: ['Drama', 'Comedy', 'Thriller'],
+          language: 'Tamil',
+          poster: '🌟',
+        },
+        {
+          id: 't8',
+          title: 'Vada Chennai',
+          year: 2018,
+          rating: 8.6,
+          genres: ['Crime', 'Drama', 'Action'],
+          language: 'Tamil',
+          poster: '🔫',
+        },
+        {
+          id: 't9',
+          title: 'Karnan',
+          year: 2021,
+          rating: 8.4,
+          genres: ['Drama', 'Action'],
+          language: 'Tamil',
+          poster: '⚔️',
+        },
+        {
+          id: 't10',
+          title: 'Jai Bhim',
+          year: 2021,
+          rating: 9.5,
+          genres: ['Drama', 'Crime'],
+          language: 'Tamil',
+          poster: '⚖️',
+        },
+        {
+          id: 't11',
+          title: 'Soorarai Pottru',
+          year: 2020,
+          rating: 9.2,
+          genres: ['Drama', 'Biography'],
+          language: 'Tamil',
+          poster: '✈️',
+        },
+        {
+          id: 't12',
+          title: 'Enthiran',
+          year: 2010,
+          rating: 8.3,
+          genres: ['Sci-Fi', 'Action', 'Thriller'],
+          language: 'Tamil',
+          poster: '🤖',
+        },
+        {
+          id: 't13',
+          title: 'Thuppakki',
+          year: 2012,
+          rating: 8.1,
+          genres: ['Action', 'Thriller'],
+          language: 'Tamil',
+          poster: '🎯',
+        },
+        {
+          id: 't14',
+          title: 'Asuran',
+          year: 2019,
+          rating: 8.7,
+          genres: ['Action', 'Drama'],
+          language: 'Tamil',
+          poster: '🔥',
+        },
+        {
+          id: 't15',
+          title: 'Vikram Vedha',
+          year: 2017,
+          rating: 8.9,
+          genres: ['Action', 'Crime', 'Thriller'],
+          language: 'Tamil',
+          poster: '🎲',
+        },
+      ];
+
+      const HOLLYWOOD_MOVIES = [
+        {
+          id: 'h1',
+          title: 'The Dark Knight',
+          year: 2008,
+          rating: 9.0,
+          genres: ['Action', 'Crime', 'Thriller'],
+          language: 'English',
+          poster: '🦇',
+        },
+        {
+          id: 'h2',
+          title: 'Inception',
+          year: 2010,
+          rating: 8.8,
+          genres: ['Sci-Fi', 'Action', 'Thriller'],
+          language: 'English',
+          poster: '🌀',
+        },
+        {
+          id: 'h3',
+          title: 'The Matrix',
+          year: 1999,
+          rating: 8.7,
+          genres: ['Sci-Fi', 'Action'],
+          language: 'English',
+          poster: '💊',
+        },
+        {
+          id: 'h4',
+          title: 'Interstellar',
+          year: 2014,
+          rating: 8.6,
+          genres: ['Sci-Fi', 'Drama', 'Adventure'],
+          language: 'English',
+          poster: '🚀',
+        },
+        {
+          id: 'h5',
+          title: 'The Shawshank Redemption',
+          year: 1994,
+          rating: 9.3,
+          genres: ['Drama'],
+          language: 'English',
+          poster: '🔓',
+        },
+        {
+          id: 'h6',
+          title: 'Pulp Fiction',
+          year: 1994,
+          rating: 8.9,
+          genres: ['Crime', 'Drama', 'Thriller'],
+          language: 'English',
+          poster: '💼',
+        },
+        {
+          id: 'h7',
+          title: 'The Godfather',
+          year: 1972,
+          rating: 9.2,
+          genres: ['Crime', 'Drama'],
+          language: 'English',
+          poster: '🍝',
+        },
+        {
+          id: 'h8',
+          title: 'Fight Club',
+          year: 1999,
+          rating: 8.8,
+          genres: ['Drama', 'Thriller'],
+          language: 'English',
+          poster: '👊',
+        },
+        {
+          id: 'h9',
+          title: 'The Avengers',
+          year: 2012,
+          rating: 8.0,
+          genres: ['Action', 'Adventure', 'Sci-Fi'],
+          language: 'English',
+          poster: '🦸',
+        },
+        {
+          id: 'h10',
+          title: 'The Lord of the Rings',
+          year: 2001,
+          rating: 8.8,
+          genres: ['Adventure', 'Drama', 'Fantasy'],
+          language: 'English',
+          poster: '💍',
+        },
+        {
+          id: 'h11',
+          title: 'Titanic',
+          year: 1997,
+          rating: 7.8,
+          genres: ['Romance', 'Drama'],
+          language: 'English',
+          poster: '🚢',
+        },
+        {
+          id: 'h12',
+          title: 'The Departed',
+          year: 2006,
+          rating: 8.5,
+          genres: ['Crime', 'Drama', 'Thriller'],
+          language: 'English',
+          poster: '🕵️',
+        },
+        {
+          id: 'h13',
+          title: 'Django Unchained',
+          year: 2012,
+          rating: 8.4,
+          genres: ['Western', 'Drama', 'Action'],
+          language: 'English',
+          poster: '🔫',
+        },
+        {
+          id: 'h14',
+          title: 'The Wolf of Wall Street',
+          year: 2013,
+          rating: 8.2,
+          genres: ['Biography', 'Comedy', 'Crime'],
+          language: 'English',
+          poster: '💰',
+        },
+        {
+          id: 'h15',
+          title: 'Mad Max: Fury Road',
+          year: 2015,
+          rating: 8.1,
+          genres: ['Action', 'Adventure', 'Sci-Fi'],
+          language: 'English',
+          poster: '🏎️',
+        },
+      ];
+
+      // Bollywood Movies
+      const BOLLYWOOD_MOVIES = [
+        { id: 'b1', title: '3 Idiots', year: 2009, rating: 8.4, genres: ['Comedy', 'Drama'], language: 'Hindi', poster: '🎓' },
+        { id: 'b2', title: 'Dangal', year: 2016, rating: 8.4, genres: ['Biography', 'Drama', 'Sport'], language: 'Hindi', poster: '🤼' },
+        { id: 'b3', title: 'Lagaan', year: 2001, rating: 8.1, genres: ['Drama', 'Musical', 'Sport'], language: 'Hindi', poster: '🏏' },
+        { id: 'b4', title: 'Zindagi Na Milegi Dobara', year: 2011, rating: 8.2, genres: ['Comedy', 'Drama'], language: 'Hindi', poster: '✈️' },
+        { id: 'b5', title: 'Gully Boy', year: 2019, rating: 8.0, genres: ['Drama', 'Music'], language: 'Hindi', poster: '🎤' },
+        { id: 'b6', title: 'PK', year: 2014, rating: 8.1, genres: ['Comedy', 'Drama', 'Sci-Fi'], language: 'Hindi', poster: '👽' },
+        { id: 'b7', title: 'Bajrangi Bhaijaan', year: 2015, rating: 8.0, genres: ['Action', 'Comedy', 'Drama'], language: 'Hindi', poster: '🙏' },
+        { id: 'b8', title: 'Queen', year: 2013, rating: 8.2, genres: ['Comedy', 'Drama'], language: 'Hindi', poster: '👑' },
+        { id: 'b9', title: 'Taare Zameen Par', year: 2007, rating: 8.4, genres: ['Drama', 'Family'], language: 'Hindi', poster: '⭐' },
+        { id: 'b10', title: 'Uri: The Surgical Strike', year: 2019, rating: 8.2, genres: ['Action', 'Drama', 'War'], language: 'Hindi', poster: '🎖️' },
+        { id: 'b11', title: 'Andhadhun', year: 2018, rating: 8.3, genres: ['Comedy', 'Crime', 'Thriller'], language: 'Hindi', poster: '🎹' },
+        { id: 'b12', title: 'Barfi!', year: 2012, rating: 8.1, genres: ['Comedy', 'Drama', 'Romance'], language: 'Hindi', poster: '🎬' },
+        { id: 'b13', title: 'Drishyam', year: 2015, rating: 8.2, genres: ['Crime', 'Drama', 'Thriller'], language: 'Hindi', poster: '📺' },
+        { id: 'b14', title: 'Gangs of Wasseypur', year: 2012, rating: 8.2, genres: ['Action', 'Crime', 'Drama'], language: 'Hindi', poster: '🔫' },
+        { id: 'b15', title: 'Rockstar', year: 2011, rating: 7.7, genres: ['Drama', 'Music', 'Romance'], language: 'Hindi', poster: '🎸' },
+      ];
+
+      // Korean Movies
+      const KOREAN_MOVIES = [
+        { id: 'k1', title: 'Parasite', year: 2019, rating: 8.5, genres: ['Comedy', 'Drama', 'Thriller'], language: 'Korean', poster: '🏠' },
+        { id: 'k2', title: 'Oldboy', year: 2003, rating: 8.4, genres: ['Action', 'Drama', 'Mystery'], language: 'Korean', poster: '🔪' },
+        { id: 'k3', title: 'Train to Busan', year: 2016, rating: 7.6, genres: ['Action', 'Horror', 'Thriller'], language: 'Korean', poster: '🚂' },
+        { id: 'k4', title: 'The Handmaiden', year: 2016, rating: 8.1, genres: ['Drama', 'Romance', 'Thriller'], language: 'Korean', poster: '👗' },
+        { id: 'k5', title: 'Memories of Murder', year: 2003, rating: 8.1, genres: ['Crime', 'Drama', 'Mystery'], language: 'Korean', poster: '🔍' },
+        { id: 'k6', title: 'I Saw the Devil', year: 2010, rating: 7.8, genres: ['Action', 'Crime', 'Thriller'], language: 'Korean', poster: '😈' },
+        { id: 'k7', title: 'The Wailing', year: 2016, rating: 7.4, genres: ['Horror', 'Mystery', 'Thriller'], language: 'Korean', poster: '👹' },
+        { id: 'k8', title: 'A Tale of Two Sisters', year: 2003, rating: 7.2, genres: ['Drama', 'Horror', 'Mystery'], language: 'Korean', poster: '👭' },
+        { id: 'k9', title: 'Burning', year: 2018, rating: 7.5, genres: ['Drama', 'Mystery', 'Thriller'], language: 'Korean', poster: '🔥' },
+        { id: 'k10', title: 'The Host', year: 2006, rating: 7.0, genres: ['Action', 'Drama', 'Horror'], language: 'Korean', poster: '🐉' },
+      ];
+
+      // Japanese Movies
+      const JAPANESE_MOVIES = [
+        { id: 'j1', title: 'Spirited Away', year: 2001, rating: 8.6, genres: ['Animation', 'Adventure', 'Family'], language: 'Japanese', poster: '👻' },
+        { id: 'j2', title: 'Your Name', year: 2016, rating: 8.4, genres: ['Animation', 'Drama', 'Romance'], language: 'Japanese', poster: '💫' },
+        { id: 'j3', title: 'Seven Samurai', year: 1954, rating: 8.6, genres: ['Action', 'Adventure', 'Drama'], language: 'Japanese', poster: '⚔️' },
+        { id: 'j4', title: 'Princess Mononoke', year: 1997, rating: 8.4, genres: ['Animation', 'Adventure', 'Fantasy'], language: 'Japanese', poster: '🐺' },
+        { id: 'j5', title: 'Rashomon', year: 1950, rating: 8.2, genres: ['Crime', 'Drama', 'Mystery'], language: 'Japanese', poster: '🎭' },
+        { id: 'j6', title: 'Grave of the Fireflies', year: 1988, rating: 8.5, genres: ['Animation', 'Drama', 'War'], language: 'Japanese', poster: '🕯️' },
+        { id: 'j7', title: 'My Neighbor Totoro', year: 1988, rating: 8.2, genres: ['Animation', 'Family', 'Fantasy'], language: 'Japanese', poster: '🌳' },
+        { id: 'j8', title: 'Akira', year: 1988, rating: 8.0, genres: ['Animation', 'Action', 'Sci-Fi'], language: 'Japanese', poster: '🤯' },
+        { id: 'j9', title: 'Perfect Blue', year: 1997, rating: 8.0, genres: ['Animation', 'Drama', 'Horror'], language: 'Japanese', poster: '🎤' },
+        { id: 'j10', title: 'The Wind Rises', year: 2013, rating: 7.8, genres: ['Animation', 'Biography', 'Drama'], language: 'Japanese', poster: '✈️' },
+      ];
+
+      // French Movies
+      const FRENCH_MOVIES = [
+        { id: 'f1', title: 'The Intouchables', year: 2011, rating: 8.5, genres: ['Biography', 'Comedy', 'Drama'], language: 'French', poster: '🎭' },
+        { id: 'f2', title: 'Amélie', year: 2001, rating: 8.3, genres: ['Comedy', 'Romance'], language: 'French', poster: '🎠' },
+        { id: 'f3', title: 'La La Land', year: 2016, rating: 8.0, genres: ['Comedy', 'Drama', 'Musical'], language: 'English/French', poster: '🎷' },
+        { id: 'f4', title: 'City of God', year: 2002, rating: 8.6, genres: ['Crime', 'Drama'], language: 'Portuguese/French', poster: '🏙️' },
+        { id: 'f5', title: 'The Artist', year: 2011, rating: 7.9, genres: ['Comedy', 'Drama', 'Romance'], language: 'French', poster: '🎬' },
+        { id: 'f6', title: 'Blue Is the Warmest Colour', year: 2013, rating: 7.7, genres: ['Drama', 'Romance'], language: 'French', poster: '💙' },
+        { id: 'f7', title: 'Amour', year: 2012, rating: 7.9, genres: ['Drama', 'Romance'], language: 'French', poster: '❤️' },
+        { id: 'f8', title: 'The 400 Blows', year: 1959, rating: 8.1, genres: ['Crime', 'Drama'], language: 'French', poster: '🏃' },
+        { id: 'f9', title: 'Breathless', year: 1960, rating: 7.8, genres: ['Crime', 'Drama'], language: 'French', poster: '🚗' },
+        { id: 'f10', title: 'Incendies', year: 2010, rating: 8.3, genres: ['Drama', 'Mystery', 'War'], language: 'French', poster: '🔥' },
+      ];
+
+      // Spanish Movies
+      const SPANISH_MOVIES = [
+        { id: 's1', title: 'Pan\'s Labyrinth', year: 2006, rating: 8.2, genres: ['Drama', 'Fantasy', 'War'], language: 'Spanish', poster: '🧚' },
+        { id: 's2', title: 'The Secret in Their Eyes', year: 2009, rating: 8.2, genres: ['Crime', 'Drama', 'Mystery'], language: 'Spanish', poster: '👁️' },
+        { id: 's3', title: 'Volver', year: 2006, rating: 7.6, genres: ['Comedy', 'Drama'], language: 'Spanish', poster: '🔄' },
+        { id: 's4', title: 'Talk to Her', year: 2002, rating: 7.9, genres: ['Drama', 'Romance'], language: 'Spanish', poster: '💬' },
+        { id: 's5', title: 'The Orphanage', year: 2007, rating: 7.4, genres: ['Drama', 'Horror', 'Mystery'], language: 'Spanish', poster: '🏚️' },
+        { id: 's6', title: 'Y Tu Mamá También', year: 2001, rating: 7.6, genres: ['Comedy', 'Drama'], language: 'Spanish', poster: '🚗' },
+        { id: 's7', title: 'Open Your Eyes', year: 1997, rating: 7.7, genres: ['Drama', 'Mystery', 'Sci-Fi'], language: 'Spanish', poster: '👁️' },
+        { id: 's8', title: 'The Skin I Live In', year: 2011, rating: 7.6, genres: ['Drama', 'Horror', 'Thriller'], language: 'Spanish', poster: '🎭' },
+        { id: 's9', title: 'Roma', year: 2018, rating: 7.7, genres: ['Drama'], language: 'Spanish', poster: '🏛️' },
+        { id: 's10', title: 'Pain and Glory', year: 2019, rating: 7.5, genres: ['Drama'], language: 'Spanish', poster: '🎬' },
+      ];
+
+      // More Hollywood Movies
+      const MORE_HOLLYWOOD_MOVIES = [
+        { id: 'h16', title: 'The Godfather Part II', year: 1974, rating: 9.0, genres: ['Crime', 'Drama'], language: 'English', poster: '🍷' },
+        { id: 'h17', title: 'Schindler\'s List', year: 1993, rating: 8.9, genres: ['Biography', 'Drama', 'History'], language: 'English', poster: '📝' },
+        { id: 'h18', title: 'Forrest Gump', year: 1994, rating: 8.8, genres: ['Drama', 'Romance'], language: 'English', poster: '🏃' },
+        { id: 'h19', title: 'Fight Club', year: 1999, rating: 8.8, genres: ['Drama', 'Thriller'], language: 'English', poster: '👊' },
+        { id: 'h20', title: 'Goodfellas', year: 1990, rating: 8.7, genres: ['Biography', 'Crime', 'Drama'], language: 'English', poster: '🎰' },
+        { id: 'h21', title: 'The Lord of the Rings: Return', year: 2003, rating: 8.9, genres: ['Action', 'Adventure', 'Drama'], language: 'English', poster: '👑' },
+        { id: 'h22', title: 'Star Wars: Empire Strikes Back', year: 1980, rating: 8.7, genres: ['Action', 'Adventure', 'Fantasy'], language: 'English', poster: '⭐' },
+        { id: 'h23', title: 'The Usual Suspects', year: 1995, rating: 8.5, genres: ['Crime', 'Mystery', 'Thriller'], language: 'English', poster: '🕵️' },
+        { id: 'h24', title: 'Se7en', year: 1995, rating: 8.6, genres: ['Crime', 'Drama', 'Mystery'], language: 'English', poster: '📦' },
+        { id: 'h25', title: 'The Silence of the Lambs', year: 1991, rating: 8.6, genres: ['Crime', 'Drama', 'Thriller'], language: 'English', poster: '🦋' },
+        { id: 'h26', title: 'It\'s a Wonderful Life', year: 1946, rating: 8.6, genres: ['Drama', 'Family', 'Fantasy'], language: 'English', poster: '👼' },
+        { id: 'h27', title: 'City Lights', year: 1931, rating: 8.5, genres: ['Comedy', 'Drama', 'Romance'], language: 'English', poster: '💡' },
+        { id: 'h28', title: 'Casablanca', year: 1942, rating: 8.5, genres: ['Drama', 'Romance', 'War'], language: 'English', poster: '🎰' },
+        { id: 'h29', title: 'Modern Times', year: 1936, rating: 8.5, genres: ['Comedy', 'Drama', 'Family'], language: 'English', poster: '⚙️' },
+        { id: 'h30', title: 'Psycho', year: 1960, rating: 8.5, genres: ['Horror', 'Mystery', 'Thriller'], language: 'English', poster: '🛁' },
+        { id: 'h31', title: 'Gladiator', year: 2000, rating: 8.5, genres: ['Action', 'Adventure', 'Drama'], language: 'English', poster: '🗡️' },
+        { id: 'h32', title: 'One Flew Over the Cuckoo\'s Nest', year: 1975, rating: 8.7, genres: ['Drama'], language: 'English', poster: '🏥' },
+        { id: 'h33', title: 'Leon: The Professional', year: 1994, rating: 8.5, genres: ['Action', 'Crime', 'Drama'], language: 'English', poster: '🌱' },
+        { id: 'h34', title: 'The Pianist', year: 2002, rating: 8.5, genres: ['Biography', 'Drama', 'Music'], language: 'English', poster: '🎹' },
+        { id: 'h35', title: 'Whiplash', year: 2014, rating: 8.5, genres: ['Drama', 'Music'], language: 'English', poster: '🥁' },
+        { id: 'h36', title: 'The Prestige', year: 2006, rating: 8.5, genres: ['Drama', 'Mystery', 'Sci-Fi'], language: 'English', poster: '🎩' },
+        { id: 'h37', title: 'Memento', year: 2000, rating: 8.4, genres: ['Mystery', 'Thriller'], language: 'English', poster: '📸' },
+        { id: 'h38', title: 'The Terminator', year: 1984, rating: 8.0, genres: ['Action', 'Sci-Fi'], language: 'English', poster: '🤖' },
+        { id: 'h39', title: 'Aliens', year: 1986, rating: 8.3, genres: ['Action', 'Adventure', 'Sci-Fi'], language: 'English', poster: '👽' },
+        { id: 'h40', title: 'The Shining', year: 1980, rating: 8.4, genres: ['Drama', 'Horror'], language: 'English', poster: '🔪' },
+        { id: 'h41', title: 'Apocalypse Now', year: 1979, rating: 8.4, genres: ['Drama', 'War'], language: 'English', poster: '🚁' },
+        { id: 'h42', title: 'Taxi Driver', year: 1976, rating: 8.2, genres: ['Crime', 'Drama'], language: 'English', poster: '🚕' },
+        { id: 'h43', title: 'Blade Runner', year: 1982, rating: 8.1, genres: ['Action', 'Sci-Fi', 'Thriller'], language: 'English', poster: '🔮' },
+        { id: 'h44', title: '2001: A Space Odyssey', year: 1968, rating: 8.3, genres: ['Adventure', 'Sci-Fi'], language: 'English', poster: '🌌' },
+        { id: 'h45', title: 'Jurassic Park', year: 1993, rating: 8.1, genres: ['Action', 'Adventure', 'Sci-Fi'], language: 'English', poster: '🦖' },
+        { id: 'h46', title: 'E.T. the Extra-Terrestrial', year: 1982, rating: 7.8, genres: ['Family', 'Sci-Fi'], language: 'English', poster: '👾' },
+        { id: 'h47', title: 'Back to the Future', year: 1985, rating: 8.5, genres: ['Adventure', 'Comedy', 'Sci-Fi'], language: 'English', poster: '⏰' },
+        { id: 'h48', title: 'Saving Private Ryan', year: 1998, rating: 8.6, genres: ['Drama', 'War'], language: 'English', poster: '🎖️' },
+        { id: 'h49', title: 'The Green Mile', year: 1999, rating: 8.6, genres: ['Crime', 'Drama', 'Fantasy'], language: 'English', poster: '🟢' },
+        { id: 'h50', title: 'The Lion King', year: 1994, rating: 8.5, genres: ['Animation', 'Adventure', 'Drama'], language: 'English', poster: '🦁' },
+      ];
+
+      // More Tamil Movies
+      const MORE_TAMIL_MOVIES = [
+        { id: 't16', title: 'Vada Chennai', year: 2018, rating: 8.6, genres: ['Crime', 'Drama', 'Action'], language: 'Tamil', poster: '🎯' },
+        { id: 't17', title: 'Pariyerum Perumal', year: 2018, rating: 8.7, genres: ['Drama', 'Crime'], language: 'Tamil', poster: '🎓' },
+        { id: 't18', title: 'Aruvi', year: 2016, rating: 8.4, genres: ['Drama'], language: 'Tamil', poster: '💧' },
+        { id: 't19', title: 'Thani Oruvan', year: 2015, rating: 8.3, genres: ['Action', 'Crime', 'Thriller'], language: 'Tamil', poster: '🎭' },
+        { id: 't20', title: 'Premam', year: 2015, rating: 8.5, genres: ['Comedy', 'Drama', 'Romance'], language: 'Tamil', poster: '💕' },
+        { id: 't21', title: 'Visaranai', year: 2015, rating: 8.6, genres: ['Crime', 'Drama', 'Thriller'], language: 'Tamil', poster: '⚖️' },
+        { id: 't22', title: 'Jigarthanda', year: 2014, rating: 8.5, genres: ['Action', 'Comedy', 'Crime'], language: 'Tamil', poster: '🎬' },
+        { id: 't23', title: 'Pizza', year: 2012, rating: 8.2, genres: ['Horror', 'Mystery', 'Thriller'], language: 'Tamil', poster: '🍕' },
+        { id: 't24', title: 'Soodhu Kavvum', year: 2013, rating: 8.4, genres: ['Comedy', 'Crime', 'Thriller'], language: 'Tamil', poster: '😈' },
+        { id: 't25', title: 'Nayakan', year: 1987, rating: 8.6, genres: ['Crime', 'Drama'], language: 'Tamil', poster: '👔' },
+        { id: 't26', title: 'Anbe Sivam', year: 2003, rating: 8.8, genres: ['Adventure', 'Comedy', 'Drama'], language: 'Tamil', poster: '🙏' },
+        { id: 't27', title: 'Indian', year: 1996, rating: 8.3, genres: ['Action', 'Crime', 'Drama'], language: 'Tamil', poster: '🇮🇳' },
+        { id: 't28', title: 'Mouna Ragam', year: 1986, rating: 8.5, genres: ['Drama', 'Romance'], language: 'Tamil', poster: '🌙' },
+        { id: 't29', title: 'Roja', year: 1992, rating: 8.2, genres: ['Drama', 'Romance', 'Thriller'], language: 'Tamil', poster: '🌹' },
+        { id: 't30', title: 'Thevar Magan', year: 1992, rating: 8.4, genres: ['Drama'], language: 'Tamil', poster: '👑' },
+      ];
+
+      // Combine all movies
+      AppState.allMovies = [
+        ...TAMIL_MOVIES,
+        ...MORE_TAMIL_MOVIES,
+        ...HOLLYWOOD_MOVIES,
+        ...MORE_HOLLYWOOD_MOVIES,
+        ...BOLLYWOOD_MOVIES,
+        ...KOREAN_MOVIES,
+        ...JAPANESE_MOVIES,
+        ...FRENCH_MOVIES,
+        ...SPANISH_MOVIES,
+      ];
+
+      // Authentication Functions
+      function initAuth() {
+        const loginForm = document.getElementById('login-form');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        if (loginForm) {
+          loginForm.addEventListener('submit', handleLogin);
+        }
+        if (logoutBtn) {
+          logoutBtn.addEventListener('click', handleLogout);
+        }
+
+        const savedUser = localStorage.getItem('movieMagicUser');
+        if (savedUser) {
+          try {
+            AppState.currentUser = JSON.parse(savedUser);
+            const savedFavorites = localStorage.getItem('movieMagicFavorites');
+            if (savedFavorites) {
+              AppState.favoriteMovies = JSON.parse(savedFavorites);
+            }
+            showView('dashboard');
+            loadDashboard();
+          } catch (e) {
+            console.error('Error loading session:', e);
+          }
+        }
+      }
+
+      function handleLogin(e) {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const errorMsg = document.getElementById('login-error');
+
+        if (!email || !password) {
+          errorMsg.textContent = 'Please enter both email and password';
+          return;
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          errorMsg.textContent = 'Please enter a valid email address';
+          return;
+        }
+
+        if (password.length < 6) {
+          errorMsg.textContent = 'Password must be at least 6 characters';
+          return;
+        }
+
+        AppState.currentUser = { email, loginTime: new Date().toISOString() };
+        localStorage.setItem('movieMagicUser', JSON.stringify(AppState.currentUser));
+
+        errorMsg.textContent = '';
+        showView('dashboard');
+        loadDashboard();
+      }
+
+      function handleLogout() {
+        AppState.currentUser = null;
+        AppState.favoriteMovies = [];
+        AppState.recommendations = [];
+        localStorage.removeItem('movieMagicUser');
+        localStorage.removeItem('movieMagicFavorites');
+        document.getElementById('login-form').reset();
+        showView('login');
+      }
+
+      function showView(viewName) {
+        document.querySelectorAll('.view').forEach((view) => {
+          view.classList.remove('active');
+        });
+        const viewElement = document.getElementById(`${viewName}-view`);
+        if (viewElement) {
+          viewElement.classList.add('active');
+          AppState.currentView = viewName;
+        }
+      }
+
+      // Dashboard Functions
+      function loadDashboard() {
+        if (AppState.currentUser) {
+          document.getElementById('user-email-display').textContent = AppState.currentUser.email;
+        }
+
+        renderMovies('tamil-movies', [...TAMIL_MOVIES, ...MORE_TAMIL_MOVIES]);
+        renderMovies('hollywood-movies', [...HOLLYWOOD_MOVIES, ...MORE_HOLLYWOOD_MOVIES]);
+        renderMovies('bollywood-movies', BOLLYWOOD_MOVIES);
+        renderMovies('korean-movies', KOREAN_MOVIES);
+        renderMovies('japanese-movies', JAPANESE_MOVIES);
+        renderMovies('french-movies', FRENCH_MOVIES);
+        renderMovies('spanish-movies', SPANISH_MOVIES);
+        renderFavoriteMovies();
+        updateRecommendations();
+
+        const searchInput = document.getElementById('movie-search');
+        const searchBtn = document.getElementById('search-btn');
+
+        searchInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            searchMovie();
+          }
+        });
+
+        searchBtn.addEventListener('click', searchMovie);
+      }
+
+      function searchMovie() {
+        const query = document.getElementById('movie-search').value.trim().toLowerCase();
+        if (!query) return;
+
+        const results = AppState.allMovies.filter((movie) =>
+          movie.title.toLowerCase().includes(query)
+        );
+
+        if (results.length > 0) {
+          // Show first result or let user choose
+          const movie = results[0];
+          addFavoriteMovie(movie);
+          document.getElementById('movie-search').value = '';
+        } else {
+          alert('Movie not found. Please try a different search.');
+        }
+      }
+
+      function addFavoriteMovie(movie) {
+        if (!AppState.favoriteMovies.find((m) => m.id === movie.id)) {
+          AppState.favoriteMovies.push(movie);
+          localStorage.setItem('movieMagicFavorites', JSON.stringify(AppState.favoriteMovies));
+          renderFavoriteMovies();
+          updateRecommendations();
+        }
+      }
+
+      function removeFavoriteMovie(movieId) {
+        AppState.favoriteMovies = AppState.favoriteMovies.filter((m) => m.id !== movieId);
+        localStorage.setItem('movieMagicFavorites', JSON.stringify(AppState.favoriteMovies));
+        renderFavoriteMovies();
+        updateRecommendations();
+      }
+
+      function renderFavoriteMovies() {
+        const container = document.getElementById('favorite-movies');
+        if (AppState.favoriteMovies.length === 0) {
+          container.innerHTML = '';
+          return;
+        }
+
+        container.innerHTML = AppState.favoriteMovies
+          .map(
+            (movie) => `
+          <div class="favorite-tag">
+            ${movie.title} (${movie.year})
+            <span class="close" onclick="removeFavorite('${movie.id}')">×</span>
+          </div>
+        `
+          )
+          .join('');
+      }
+
+      function removeFavorite(movieId) {
+        removeFavoriteMovie(movieId);
+      }
+
+      // ML-based Recommendation Algorithm
+      function getRecommendations() {
+        if (AppState.favoriteMovies.length === 0) {
+          return [];
+        }
+
+        // Extract genres from favorite movies
+        const favoriteGenres = {};
+        AppState.favoriteMovies.forEach((movie) => {
+          movie.genres.forEach((genre) => {
+            favoriteGenres[genre] = (favoriteGenres[genre] || 0) + 1;
+          });
+        });
+
+        // Calculate similarity scores for all movies
+        const movieScores = AppState.allMovies.map((movie) => {
+          // Skip if already in favorites
+          if (AppState.favoriteMovies.find((m) => m.id === movie.id)) {
+            return { movie, score: 0 };
+          }
+
+          let score = 0;
+          movie.genres.forEach((genre) => {
+            if (favoriteGenres[genre]) {
+              score += favoriteGenres[genre] * 10; // Weight by frequency
+            }
+          });
+
+          // Boost score based on rating
+          score += movie.rating * 2;
+
+          // Boost score for movies with multiple matching genres
+          const matchingGenres = movie.genres.filter((g) => favoriteGenres[g]).length;
+          score += matchingGenres * 15;
+
+          return { movie, score };
+        });
+
+        // Sort by score and return top recommendations
+        return movieScores
+          .filter((item) => item.score > 0)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 12)
+          .map((item) => item.movie);
+      }
+
+      function updateRecommendations() {
+        const recommendations = getRecommendations();
+        AppState.recommendations = recommendations;
+
+        const section = document.getElementById('recommendations-section');
+        const grid = document.getElementById('recommendations-grid');
+        const count = document.getElementById('recommendations-count');
+
+        if (recommendations.length > 0) {
+          section.style.display = 'block';
+          count.textContent = `${recommendations.length} recommendations based on your favorites`;
+          renderMovies('recommendations-grid', recommendations);
+        } else {
+          section.style.display = 'none';
+        }
+      }
+
+      function renderMovies(containerId, movies) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = movies
+          .map(
+            (movie) => `
+          <div class="movie-card" onclick="selectMovie('${movie.id}')">
+            <div class="movie-poster">${movie.poster}</div>
+            <div class="movie-info">
+              <div class="movie-title">${movie.title}</div>
+              <div class="movie-meta">
+                <span class="movie-year">${movie.year}</span>
+                <span class="movie-rating">⭐ ${movie.rating}</span>
+              </div>
+              <div class="movie-genres">
+                ${movie.genres.map((g) => `<span class="genre-tag">${g}</span>`).join('')}
+              </div>
+            </div>
+          </div>
+        `
+          )
+          .join('');
+      }
+
+      function selectMovie(movieId) {
+        const movie = AppState.allMovies.find((m) => m.id === movieId);
+        if (movie) {
+          addFavoriteMovie(movie);
+        }
+      }
+
+      // Initialize
+      document.addEventListener('DOMContentLoaded', () => {
+        initAuth();
+      });
+    </script>
+  </body>
+</html>
+
